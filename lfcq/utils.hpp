@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <cstdint>
+#include <functional>
 
 namespace lfcq {
 
@@ -22,5 +23,9 @@ inline uint32_t alignUpPowOf2(uint32_t val) {
 }
 
 #undef QUEUE_MAX_SIZE
+
+/* callback when there is an element popped from the queue. */
+template <typename T>
+using PopHandle = std::function<void(T&)>;
 
 }  // namespace lfcq
