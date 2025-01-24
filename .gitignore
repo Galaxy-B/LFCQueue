@@ -33,4 +33,7 @@
 
 .vscode/
 build/
+
+# clangd relative
+.cache/
 .clangd
