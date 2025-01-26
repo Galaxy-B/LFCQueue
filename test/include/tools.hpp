@@ -2,14 +2,8 @@
 #include <x86intrin.h>
 #include <cstdint>
 #include <random>
-#include <string>
 
 namespace test {
-
-struct TestObj {
-    std::string uid;
-    uint32_t seq;
-};
 
 /* read TSC timestamp. */
 inline uint64_t rdtscp() {
