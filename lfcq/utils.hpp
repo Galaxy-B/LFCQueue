@@ -1,5 +1,6 @@
 #pragma once
 #include <algorithm>
+#include <concepts>
 #include <cstdint>
 #include <functional>
 
@@ -23,6 +24,10 @@ inline uint32_t alignUpPowOf2(uint32_t val) {
 }
 
 #undef QUEUE_MAX_SIZE
+
+/* automatically generate <push> function for derivative types of T */
+template <typename U, typename T>
+concept RelatedTo = std::same_as<U, T> || std::same_as<U, const T> || std::same_as<U, T&> || std::same_as<U, const T&>;
 
 /* callback when there is an element popped from the queue. */
 template <typename T>

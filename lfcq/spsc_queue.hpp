@@ -58,7 +58,8 @@ class SpscQueue {
 
     /* push an object to the end of the queue. */
     /* return false if the queue is full now, otherwise true. */
-    bool push(T&& obj) {
+    template <typename U>
+    bool push(U&& obj) requires RelatedTo<U, T> {
         uint32_t head = head_.load(std::memory_order_acquire);
         if (tail_ - head == size_) return false;
 
