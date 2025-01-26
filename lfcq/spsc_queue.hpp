@@ -21,7 +21,7 @@ class SpscQueue {
     explicit SpscQueue(uint32_t size) {
         size_ = alignUpPowOf2(size);
         mask_ = size_ - 1;
-        queue_ = reinterpret_cast<T*>(new char[sizeof(T) * size]);
+        queue_ = reinterpret_cast<T*>(new char[sizeof(T) * size_]);
     }
 
     ~SpscQueue() {
