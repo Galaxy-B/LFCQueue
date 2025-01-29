@@ -1,6 +1,7 @@
 #pragma once
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 
 namespace test {
 
@@ -12,7 +13,12 @@ class Dumper {
     std::ofstream file;
 
   public:
-    explicit Dumper(const std::string&& path) : file(Path(path)) {}
+    explicit Dumper(const std::string&& path) : file(Path(path)) {
+        if (!file) {
+            std::cout << "fail to open or create dump file: " << path << std::endl;
+            exit(1);
+        }
+    }
 
     ~Dumper() { file.close(); }
 
