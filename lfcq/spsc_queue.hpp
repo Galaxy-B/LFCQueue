@@ -64,6 +64,7 @@ class SpscQueue {
         if (tail_ - head == size_) return false;
 
         queue_[tail_ & mask_] = std::forward<T>(obj);
+
         tail_.fetch_add(1, std::memory_order_acq_rel);
         return true;
     }
@@ -76,6 +77,7 @@ class SpscQueue {
         if (tail_ - head == size_) return false;
 
         new (&queue_[tail_ & mask_]) T(std::forward<Args>(args)...);
+
         tail_.fetch_add(1, std::memory_order_acq_rel);
         return true;
     }
@@ -87,6 +89,7 @@ class SpscQueue {
         if (head_ == tail) return false;
 
         handle(queue_[head_ & mask_]);
+
         head_.fetch_add(1, std::memory_order_acq_rel);
         return true;
     }
