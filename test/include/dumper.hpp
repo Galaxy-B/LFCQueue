@@ -2,6 +2,8 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <mutex>
+#include <utility>
 
 namespace test {
 
@@ -25,6 +27,22 @@ class Dumper {
     template <typename... Args>
     void dump(Args&&... args) {
         (file_ << ... << std::forward<Args>(args)) << std::endl;
+    }
+};
+
+/* thread-safe shared dumper for multiple writers */
+class SyncDumper {
+  private:
+    Dumper dumper_;
+    std::mutex mtx_;
+
+  public:
+    explicit SyncDumper(const std::string&& path) : dumper_(std::move(path)) {}
+
+    template <typename... Args>
+    void dump(Args&&... args) {
+        std::lock_guard<std::mutex> lock(mtx_);
+        dumper_.dump(std::forward<Args>(args)...);
     }
 };
 
