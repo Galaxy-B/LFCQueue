@@ -22,7 +22,10 @@ class Dumper {
 
     ~Dumper() { file.close(); }
 
-    std::ofstream& stream() { return file; }
+    template <typename... Args>
+    void dump(Args&&... args) {
+        (file << ... << std::forward<Args>(args)) << std::endl;
+    }
 };
 
 }  // namespace test

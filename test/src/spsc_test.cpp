@@ -1,6 +1,5 @@
 #include <cstdint>
 #include <cstdlib>
-#include <iostream>
 #include <thread>
 
 #include "dumper.hpp"
@@ -28,18 +27,18 @@ int main(int argc, char* argv[]) {
         for (uint32_t i = 0; i < size; i++) {
             TrivialObj obj(uid, i);
             queue1.push(obj);
-            writer.stream() << obj.uid << ", " << obj.seq << std::endl;
+            writer.dump(obj);
         }
     });
 
     std::thread reader([&queue1, size]() {
-        Dumper reader("spsc/basic_reader.txt");
+        Dumper reader("spsc/basic_reader.bin");
 
         // read from the queue and dump by order
         for (uint32_t i = 0; i < size;) {
             queue1.pop([&i, &reader](TrivialObj& obj) {
                 i++;
-                reader.stream() << obj.uid << ", " << obj.seq << std::endl;
+                reader.dump(obj);
             });
         }
     });
