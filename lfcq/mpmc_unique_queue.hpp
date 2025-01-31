@@ -8,7 +8,7 @@ namespace lfcq {
 /* multiple producer multiple consumer lock-free circular queue. */
 /* NOTE: available for moving but not for copying. */
 template <typename T>
-class MpmcQueue {
+class MpmcUniqueQueue {
   private:
     std::atomic<uint32_t> next_w_;
     std::atomic<uint32_t> done_w_;
@@ -19,22 +19,22 @@ class MpmcQueue {
     T* queue_;
 
   public:
-    explicit MpmcQueue(uint32_t size) {
+    explicit MpmcUniqueQueue(uint32_t size) {
         size_ = alignUpPowOf2(size);
         mask_ = size_ - 1;
         queue_ = reinterpret_cast<T*>(new char[sizeof(T) * size_]);
     }
 
-    ~MpmcQueue() {
+    ~MpmcUniqueQueue() {
         if (queue_) {
             delete[] reinterpret_cast<char*>(queue_);
         }
     }
 
-    MpmcQueue(const MpmcQueue& other) = delete;
-    MpmcQueue& operator=(const MpmcQueue& other) = delete;
+    MpmcUniqueQueue(const MpmcUniqueQueue& other) = delete;
+    MpmcUniqueQueue& operator=(const MpmcUniqueQueue& other) = delete;
 
-    MpmcQueue(MpmcQueue&& other) {
+    MpmcUniqueQueue(MpmcUniqueQueue&& other) {
         next_w_ = other.next_w_;
         done_w_ = other.done_w_;
         next_r_ = other.next_r_;
@@ -47,7 +47,7 @@ class MpmcQueue {
         other.queue_ = nullptr;
     }
 
-    MpmcQueue& operator=(MpmcQueue&& other) {
+    MpmcUniqueQueue& operator=(MpmcUniqueQueue&& other) {
         if (this != other) {
             next_w_ = other.next_w_;
             done_w_ = other.done_w_;
