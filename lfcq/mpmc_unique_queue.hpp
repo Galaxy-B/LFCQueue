@@ -1,6 +1,6 @@
 #pragma once
 #include <atomic>
-#include <cstdint>
+#include "basic_queue.hpp"
 #include "utils.hpp"
 
 namespace lfcq {
@@ -8,43 +8,24 @@ namespace lfcq {
 /* multiple producer multiple consumer lock-free circular queue. */
 /* NOTE: available for moving but not for copying. */
 template <typename T>
-class MpmcUniqueQueue {
+class MpmcUniqueQueue : public BasicQueue<T> {
   private:
     std::atomic<uint32_t> next_w_;
     std::atomic<uint32_t> done_w_;
     std::atomic<uint32_t> next_r_;
     std::atomic<uint32_t> done_r_;
-    uint32_t size_;
-    uint32_t mask_;
-    T* queue_;
 
   public:
-    explicit MpmcUniqueQueue(uint32_t size) {
-        size_ = alignUpPowOf2(size);
-        mask_ = size_ - 1;
-        queue_ = reinterpret_cast<T*>(new char[sizeof(T) * size_]);
-    }
-
-    ~MpmcUniqueQueue() {
-        if (queue_) {
-            delete[] reinterpret_cast<char*>(queue_);
-        }
-    }
+    explicit MpmcUniqueQueue(uint32_t size) : BasicQueue<T>(size) {}
 
     MpmcUniqueQueue(const MpmcUniqueQueue& other) = delete;
     MpmcUniqueQueue& operator=(const MpmcUniqueQueue& other) = delete;
 
-    MpmcUniqueQueue(MpmcUniqueQueue&& other) {
+    MpmcUniqueQueue(MpmcUniqueQueue&& other) : BasicQueue<T>(std::move(other)) {
         next_w_ = other.next_w_;
         done_w_ = other.done_w_;
         next_r_ = other.next_r_;
         done_r_ = other.done_r_;
-
-        size_ = other.size_;
-        mask_ = other.mask_;
-
-        queue_ = other.queue_;
-        other.queue_ = nullptr;
     }
 
     MpmcUniqueQueue& operator=(MpmcUniqueQueue&& other) {
@@ -54,12 +35,9 @@ class MpmcUniqueQueue {
             next_r_ = other.next_r_;
             done_r_ = other.done_r_;
 
-            size_ = other.size_;
-            mask_ = other.mask_;
-
-            queue_ = other.queue_;
-            other.queue_ = nullptr;
+            BasicQueue<T>::operator=(std::move(other));
         }
+        return *this;
     }
 
     /* push an object to the end of the queue. */
@@ -69,10 +47,10 @@ class MpmcUniqueQueue {
         // try to acquire a place for the current push
         uint32_t idx_w = next_w_.load(std::memory_order_acquire);
         do {
-            if (idx_w - done_r_ == size_) return false;
+            if (idx_w - done_r_ == this->size_) return false;
         } while (!next_w_.compare_exchange_weak(idx_w, idx_w + 1));
 
-        queue_[idx_w & mask_] = std::forward<T>(obj);
+        this->queue_[idx_w & this->mask_] = std::forward<T>(obj);
 
         // mark the current push has done after writing
         while (done_w_ != idx_w) {}
@@ -87,10 +65,10 @@ class MpmcUniqueQueue {
         // try to acquire a place for the current emplacement
         uint32_t idx_w = next_w_.load(std::memory_order_acquire);
         do {
-            if (idx_w - done_r_ == size_) return false;
+            if (idx_w - done_r_ == this->size_) return false;
         } while (!next_w_.compare_exchange_weak(idx_w, idx_w + 1));
 
-        new (&queue_[idx_w & mask_]) T(std::forward<Args>(args)...);
+        new (&this->queue_[idx_w & this->mask_]) T(std::forward<Args>(args)...);
 
         // mark the current emplacement has done after writing
         while (done_w_ != idx_w) {}
@@ -107,7 +85,7 @@ class MpmcUniqueQueue {
             if (idx_r == done_w_) return false;
         } while (!next_r_.compare_exchange_weak(idx_r, idx_r + 1));
 
-        handle(queue_[idx_r & mask_]);
+        handle(this->queue_[idx_r & this->mask_]);
 
         // mark the current pop has done after handling the element
         while (done_r_ != idx_r) {}
