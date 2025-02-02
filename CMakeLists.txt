@@ -17,6 +17,7 @@ install(DIRECTORY lfcq/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 # build test case
 if(BUILD_TESTING)
+    message(STATUS "*** enable test building ***")
     include_directories(lfcq)
     add_subdirectory(test)
 endif()
