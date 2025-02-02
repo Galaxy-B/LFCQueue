@@ -6,34 +6,31 @@
 namespace lfcq {
 
 /* multiple producer multiple consumer lock-free circular queue. */
-/* ONLY ONE consumer allowed to manipulate a certain element simultaneously. */
+/* MULTIPLE consumers allowed to manipulate a certain element simultaneously. */
 /* NOTE: available for moving but not for copying. */
 template <typename T>
-class MpmcUniqueQueue : public BasicQueue<T> {
+class MpmcSharedQueue : public BasicQueue<T> {
   private:
     std::atomic<uint32_t> next_w_;
     std::atomic<uint32_t> done_w_;
-    std::atomic<uint32_t> next_r_;
     std::atomic<uint32_t> done_r_;
 
   public:
-    explicit MpmcUniqueQueue(uint32_t size) : BasicQueue<T>(size) {}
+    explicit MpmcSharedQueue(uint32_t size) : BasicQueue<T>(size) {}
 
-    MpmcUniqueQueue(const MpmcUniqueQueue& other) = delete;
-    MpmcUniqueQueue& operator=(const MpmcUniqueQueue& other) = delete;
+    MpmcSharedQueue(const MpmcSharedQueue& other) = delete;
+    MpmcSharedQueue& operator=(const MpmcSharedQueue& other) = delete;
 
-    MpmcUniqueQueue(MpmcUniqueQueue&& other) : BasicQueue<T>(std::move(other)) {
+    MpmcSharedQueue(MpmcSharedQueue&& other) : BasicQueue<T>(std::move(other)) {
         next_w_ = other.next_w_;
         done_w_ = other.done_w_;
-        next_r_ = other.next_r_;
         done_r_ = other.done_r_;
     }
 
-    MpmcUniqueQueue& operator=(MpmcUniqueQueue&& other) {
+    MpmcSharedQueue& operator=(MpmcSharedQueue&& other) {
         if (this != other) {
             next_w_ = other.next_w_;
             done_w_ = other.done_w_;
-            next_r_ = other.next_r_;
             done_r_ = other.done_r_;
 
             BasicQueue<T>::operator=(std::move(other));
@@ -78,19 +75,17 @@ class MpmcUniqueQueue : public BasicQueue<T> {
     }
 
     /* pop an object from the front of the queue, and handle it with the callback user provides. */
+    /* make sure the handle is available for concurrently applied to a same element(e.g. copy it). */
     /* return false if the queue is empty now, otherwise true. */
     bool pop(PopHandle<T>&& handle) {
-        // try to lock down a index and pop element from it
-        uint32_t idx_r = next_r_.load(std::memory_order_acquire);
+        // if another consumer has committed its manipulation on the element
+        // retry to handle the next until the queue is empty
+        uint32_t idx_r = done_r_.load(std::memory_order_acquire);
         do {
             if (idx_r == done_w_) return false;
-        } while (!next_r_.compare_exchange_weak(idx_r, idx_r + 1));
+            handle(this->queue_[idx_r & this->mask_]);
+        } while (!done_r_.compare_exchange_weak(idx_r, idx_r + 1));
 
-        handle(this->queue_[idx_r & this->mask_]);
-
-        // mark the current pop has done after handling the element
-        while (done_r_ != idx_r) {}
-        done_r_.fetch_add(1, std::memory_order_acq_rel);
         return true;
     }
 };
