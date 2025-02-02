@@ -3,6 +3,11 @@
 #include <concepts>
 #include <cstdint>
 #include <functional>
+#ifndef NDEBUG
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#endif
 
 namespace lfcq {
 
@@ -25,12 +30,35 @@ inline uint32_t alignUpPowOf2(uint32_t val) {
 
 #undef QUEUE_MAX_SIZE
 
-/* automatically generate <push> function for derivative types of T */
+/* automatically generate <push> function for derivative types of T. */
 template <typename U, typename T>
 concept RelatedTo = std::same_as<U, T> || std::same_as<U, const T> || std::same_as<U, T&> || std::same_as<U, const T&>;
 
 /* callback when there is an element popped from the queue. */
 template <typename T>
 using PopHandle = std::function<void(T&)>;
+
+#ifndef NDEBUG
+/* an encapsulation for easier management on file stream. */
+class Dumper {
+  private:
+    std::ofstream file_;
+
+  public:
+    explicit Dumper(const std::string&& path) : file_(std::filesystem::path(path)) {
+        if (!file_) {
+            std::cout << "[Dumper] fail to open or create dump file: " << path << std::endl;
+            exit(1);
+        }
+    }
+
+    ~Dumper() { file_.close(); }
+
+    template <typename... Args>
+    void dump(Args&&... args) {
+        (file_ << ... << std::forward<Args>(args)) << std::endl;
+    }
+};
+#endif
 
 }  // namespace lfcq

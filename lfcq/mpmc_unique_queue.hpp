@@ -93,6 +93,11 @@ class MpmcUniqueQueue : public BasicQueue<T> {
         done_r_.fetch_add(1, std::memory_order_acq_rel);
         return true;
     }
+
+#ifndef NDEBUG
+    /* enabled in debug mode to dump the content of the queue.*/
+    void dump(std::string&& path) { BasicQueue<T>::dump(done_r_, done_w_, std::move(path)); }
+#endif
 };
 
 }  // namespace lfcq

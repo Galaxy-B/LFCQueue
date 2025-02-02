@@ -47,6 +47,16 @@ class BasicQueue {
         }
         return *this;
     }
+
+#ifndef NDEBUG
+    /* dump the content of the queue on range [beg, end). */
+    void dump(uint32_t beg, uint32_t end, std::string&& path) {
+        Dumper dumper(std::move(path));
+        for (uint32_t i = beg; i != end; i++) {
+            dumper.dump(i & mask_, ": {", queue_[i & mask_], "}");
+        }
+    }
+#endif
 };
 
 }  // namespace lfcq

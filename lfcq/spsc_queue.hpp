@@ -71,6 +71,11 @@ class SpscQueue : public BasicQueue<T> {
         head_.fetch_add(1, std::memory_order_acq_rel);
         return true;
     }
+
+#ifndef NDEBUG
+    /* enabled in debug mode to dump the content of the queue.*/
+    void dump(std::string&& path) { BasicQueue<T>::dump(head_, tail_, std::move(path)); }
+#endif
 };
 
 }  // namespace lfcq

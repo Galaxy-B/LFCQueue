@@ -88,6 +88,11 @@ class MpmcSharedQueue : public BasicQueue<T> {
 
         return true;
     }
+
+#ifndef NDEBUG
+    /* enabled in debug mode to dump the content of the queue.*/
+    void dump(std::string&& path) { BasicQueue<T>::dump(done_r_, done_w_, std::move(path)); }
+#endif
 };
 
 }  // namespace lfcq
