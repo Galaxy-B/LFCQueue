@@ -59,6 +59,23 @@ class MpmcUniqueQueue : public BasicQueue<T> {
         return true;
     }
 
+    /* call this push interface when you wish to manually initialize the object */
+    /* return false if the queue is full now, otherwise true. */
+    bool push(PushHandle<T>&& handle) {
+        // try to acquire a place for the current push
+        uint32_t idx_w = next_w_.load(std::memory_order_acquire);
+        do {
+            if (idx_w - done_r_ == this->size_) return false;
+        } while (!next_w_.compare_exchange_weak(idx_w, idx_w + 1));
+
+        handle(this->queue_[idx_w & this->mask_]);
+
+        // mark the current push has done after initializing
+        while (done_w_ != idx_w) {}
+        done_w_.fetch_add(1, std::memory_order_acq_rel);
+        return true;
+    }
+
     /* directly construct an object at the end of the queue. */
     /* return false if the queue is full now, otherwise true. */
     template <typename... Args>

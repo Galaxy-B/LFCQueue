@@ -34,6 +34,10 @@ inline uint32_t alignUpPowOf2(uint32_t val) {
 template <typename U, typename T>
 concept RelatedTo = std::same_as<U, T> || std::same_as<U, const T> || std::same_as<U, T&> || std::same_as<U, const T&>;
 
+/* callback when the user wishes to manually assign to some members of the object */
+template <typename T>
+using PushHandle = std::function<void(T&)>;
+
 /* callback when there is an element popped from the queue. */
 template <typename T>
 using PopHandle = std::function<void(T&)>;

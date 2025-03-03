@@ -47,6 +47,18 @@ class SpscQueue : public BasicQueue<T> {
         return true;
     }
 
+    /* call this push interface when you wish to manually initialize the object */
+    /* return false if the queue is full now, otherwise true. */
+    bool push(PushHandle<T>&& handle) {
+        uint32_t head = head_.load(std::memory_order_acquire);
+        if (tail_ - head == this->size_) return false;
+
+        handle(this->queue_[tail_ & this->mask_]);
+
+        tail_.fetch_add(1, std::memory_order_acq_rel);
+        return true;
+    }
+
     /* directly construct an object at the end of the queue. */
     /* return false if the queue is full now, otherwise true. */
     template <typename... Args>
