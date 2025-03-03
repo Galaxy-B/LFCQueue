@@ -50,6 +50,24 @@ TYPED_TEST(SpscTest, PushInterfaceTest) {
     EXPECT_EQ(this->writer_, this->reader_);
 }
 
+TYPED_TEST(SpscTest, ManualPushInterfaceTest) {
+    std::thread writer([this]() {
+        for (uint32_t i = 0; i < this->cnt_; i++) {
+            this->queue_.push([this, i](TypeParam& dst) {
+                memcpy(&dst.uid, &this->uid_, sizeof(uint32_t));
+                memcpy(&dst.seq, &i, sizeof(uint32_t));
+            });
+            this->writer_.emplace_back(this->uid_, i);
+        }
+    });
+
+    std::thread reader(this->pop);
+
+    writer.join();
+    reader.join();
+    EXPECT_EQ(this->writer_, this->reader_);
+}
+
 TYPED_TEST(SpscTest, EmplaceInterfaceTest) {
     std::thread writer([this]() {
         for (uint32_t i = 0; i < this->cnt_; i++) {
@@ -74,7 +92,7 @@ TYPED_TEST(SpscTest, LoopWriteTest) {
             this->queue_.emplace(this->uid_, i);
             this->writer_.emplace_back(this->uid_, i);
             // in case of emplace failure because there is no time for reader to consume
-            usleep(1000);
+            usleep(i % 1000 == 999 ? 300'000 : 0);
         }
     });
 
@@ -87,6 +105,6 @@ TYPED_TEST(SpscTest, LoopWriteTest) {
 
 int main(int argc, char* argv[]) {
     testing::InitGoogleTest(&argc, argv);
-    testing::GTEST_FLAG(output) = "console";
+    testing::GTEST_FLAG(color) = "yes";
     return RUN_ALL_TESTS();
 }
