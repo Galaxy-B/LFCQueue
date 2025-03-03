@@ -12,6 +12,15 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 include(CTest)
 include(GNUInstallDirs)
 
+# enable debug
+if (CMAKE_BUILD_TYPE STREQUAL Debug)
+    message("*** current build type is DEBUG ***")
+    add_compile_options(-g)
+else()
+    message("*** current build type is RELEASE ***")
+    add_compile_definitions(NDEBUG)
+endif()
+
 # install header files
 install(DIRECTORY lfcq/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
