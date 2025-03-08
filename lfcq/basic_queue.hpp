@@ -29,7 +29,7 @@ class BasicQueue {
     BasicQueue(const BasicQueue& other) = delete;
     BasicQueue& operator=(const BasicQueue& other) = delete;
 
-    BasicQueue(BasicQueue&& other) {
+    BasicQueue(BasicQueue&& other) noexcept {
         size_ = other.size_;
         mask_ = other.mask_;
 
@@ -37,7 +37,7 @@ class BasicQueue {
         other.queue_ = nullptr;
     }
 
-    BasicQueue& operator=(BasicQueue&& other) {
+    BasicQueue& operator=(BasicQueue&& other) noexcept {
         if (this != other) {
             size_ = other.size_;
             mask_ = other.mask_;

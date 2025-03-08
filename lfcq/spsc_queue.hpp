@@ -19,12 +19,12 @@ class SpscQueue : public BasicQueue<T> {
     SpscQueue(const SpscQueue& other) = delete;
     SpscQueue& operator=(const SpscQueue& other) = delete;
 
-    SpscQueue(SpscQueue&& other) : BasicQueue<T>(std::move(other)) {
+    SpscQueue(SpscQueue&& other) noexcept : BasicQueue<T>(std::move(other)) {
         head_ = other.head_;
         tail_ = other.tail_;
     }
 
-    SpscQueue& operator=(SpscQueue&& other) {
+    SpscQueue& operator=(SpscQueue&& other) noexcept {
         if (this != &other) {
             head_ = other.head_;
             tail_ = other.tail_;
@@ -37,7 +37,7 @@ class SpscQueue : public BasicQueue<T> {
     /* push an object to the end of the queue. */
     /* return false if the queue is full now, otherwise true. */
     template <typename U>
-    bool push(U&& obj) requires RelatedTo<U, T> {
+    bool push(U&& obj) noexcept requires RelatedTo<U, T> {
         uint32_t head = head_.load(std::memory_order_acquire);
         if (tail_ - head == this->size_) return false;
 
@@ -49,7 +49,7 @@ class SpscQueue : public BasicQueue<T> {
 
     /* call this push interface when you wish to manually initialize the object */
     /* return false if the queue is full now, otherwise true. */
-    bool push(PushHandle<T>&& handle) {
+    bool push(PushHandle<T>&& handle) noexcept {
         uint32_t head = head_.load(std::memory_order_acquire);
         if (tail_ - head == this->size_) return false;
 
@@ -62,7 +62,7 @@ class SpscQueue : public BasicQueue<T> {
     /* directly construct an object at the end of the queue. */
     /* return false if the queue is full now, otherwise true. */
     template <typename... Args>
-    bool emplace(Args&&... args) {
+    bool emplace(Args&&... args) noexcept {
         uint32_t head = head_.load(std::memory_order_acquire);
         if (tail_ - head == this->size_) return false;
 
@@ -74,7 +74,7 @@ class SpscQueue : public BasicQueue<T> {
 
     /* pop an object from the front of the queue, and handle it with the callback user provides. */
     /* return false if the queue is empty now, otherwise true. */
-    bool pop(PopHandle<T>&& handle) {
+    bool pop(PopHandle<T>&& handle) noexcept {
         uint32_t tail = tail_.load(std::memory_order_acquire);
         if (head_ == tail) return false;
 

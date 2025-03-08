@@ -22,14 +22,14 @@ class MpmcUniqueQueue : public BasicQueue<T> {
     MpmcUniqueQueue(const MpmcUniqueQueue& other) = delete;
     MpmcUniqueQueue& operator=(const MpmcUniqueQueue& other) = delete;
 
-    MpmcUniqueQueue(MpmcUniqueQueue&& other) : BasicQueue<T>(std::move(other)) {
+    MpmcUniqueQueue(MpmcUniqueQueue&& other) noexcept : BasicQueue<T>(std::move(other)) {
         next_w_ = other.next_w_;
         done_w_ = other.done_w_;
         next_r_ = other.next_r_;
         done_r_ = other.done_r_;
     }
 
-    MpmcUniqueQueue& operator=(MpmcUniqueQueue&& other) {
+    MpmcUniqueQueue& operator=(MpmcUniqueQueue&& other) noexcept {
         if (this != other) {
             next_w_ = other.next_w_;
             done_w_ = other.done_w_;
@@ -44,7 +44,7 @@ class MpmcUniqueQueue : public BasicQueue<T> {
     /* push an object to the end of the queue. */
     /* return false if the queue is full now, otherwise true. */
     template <typename U>
-    bool push(U&& obj) requires RelatedTo<U, T> {
+    bool push(U&& obj) noexcept requires RelatedTo<U, T> {
         // try to acquire a place for the current push
         uint32_t idx_w = next_w_.load(std::memory_order_acquire);
         do {
@@ -61,7 +61,7 @@ class MpmcUniqueQueue : public BasicQueue<T> {
 
     /* call this push interface when you wish to manually initialize the object */
     /* return false if the queue is full now, otherwise true. */
-    bool push(PushHandle<T>&& handle) {
+    bool push(PushHandle<T>&& handle) noexcept {
         // try to acquire a place for the current push
         uint32_t idx_w = next_w_.load(std::memory_order_acquire);
         do {
@@ -79,7 +79,7 @@ class MpmcUniqueQueue : public BasicQueue<T> {
     /* directly construct an object at the end of the queue. */
     /* return false if the queue is full now, otherwise true. */
     template <typename... Args>
-    bool emplace(Args&&... args) {
+    bool emplace(Args&&... args) noexcept {
         // try to acquire a place for the current emplacement
         uint32_t idx_w = next_w_.load(std::memory_order_acquire);
         do {
@@ -96,7 +96,7 @@ class MpmcUniqueQueue : public BasicQueue<T> {
 
     /* pop an object from the front of the queue, and handle it with the callback user provides. */
     /* return false if the queue is empty now, otherwise true. */
-    bool pop(PopHandle<T>&& handle) {
+    bool pop(PopHandle<T>&& handle) noexcept {
         // try to lock down a index and pop element from it
         uint32_t idx_r = next_r_.load(std::memory_order_acquire);
         do {

@@ -21,13 +21,13 @@ class MpmcSharedQueue : public BasicQueue<T> {
     MpmcSharedQueue(const MpmcSharedQueue& other) = delete;
     MpmcSharedQueue& operator=(const MpmcSharedQueue& other) = delete;
 
-    MpmcSharedQueue(MpmcSharedQueue&& other) : BasicQueue<T>(std::move(other)) {
+    MpmcSharedQueue(MpmcSharedQueue&& other) noexcept : BasicQueue<T>(std::move(other)) {
         next_w_ = other.next_w_;
         done_w_ = other.done_w_;
         done_r_ = other.done_r_;
     }
 
-    MpmcSharedQueue& operator=(MpmcSharedQueue&& other) {
+    MpmcSharedQueue& operator=(MpmcSharedQueue&& other) noexcept {
         if (this != other) {
             next_w_ = other.next_w_;
             done_w_ = other.done_w_;
@@ -41,7 +41,7 @@ class MpmcSharedQueue : public BasicQueue<T> {
     /* push an object to the end of the queue. */
     /* return false if the queue is full now, otherwise true. */
     template <typename U>
-    bool push(U&& obj) requires RelatedTo<U, T> {
+    bool push(U&& obj) noexcept requires RelatedTo<U, T> {
         // try to acquire a place for the current push
         uint32_t idx_w = next_w_.load(std::memory_order_acquire);
         do {
@@ -58,7 +58,7 @@ class MpmcSharedQueue : public BasicQueue<T> {
 
     /* call this push interface when you wish to manually initialize the object */
     /* return false if the queue is full now, otherwise true. */
-    bool push(PushHandle<T>&& handle) {
+    bool push(PushHandle<T>&& handle) noexcept {
         // try to acquire a place for the current push
         uint32_t idx_w = next_w_.load(std::memory_order_acquire);
         do {
@@ -76,7 +76,7 @@ class MpmcSharedQueue : public BasicQueue<T> {
     /* directly construct an object at the end of the queue. */
     /* return false if the queue is full now, otherwise true. */
     template <typename... Args>
-    bool emplace(Args&&... args) {
+    bool emplace(Args&&... args) noexcept {
         // try to acquire a place for the current emplacement
         uint32_t idx_w = next_w_.load(std::memory_order_acquire);
         do {
@@ -94,7 +94,7 @@ class MpmcSharedQueue : public BasicQueue<T> {
     /* pop an object from the front of the queue, and handle it with the callback user provides. */
     /* make sure the handle is available for concurrently applied to a same element(e.g. copy it). */
     /* return false if the queue is empty now, otherwise true. */
-    bool pop(PopHandle<T>&& handle) {
+    bool pop(PopHandle<T>&& handle) noexcept {
         // if another consumer has committed its manipulation on the element
         // retry to handle the next until the queue is empty
         uint32_t idx_r = done_r_.load(std::memory_order_acquire);
