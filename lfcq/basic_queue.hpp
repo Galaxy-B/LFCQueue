@@ -6,6 +6,8 @@ namespace lfcq {
 
 /* base class for all types of lock-free circular queues. */
 /* NOTE: available for moving but not for copying. */
+/* NOTE: all callbacks provided by user are forbidden to throw exception. */
+/* NOTE: user can customize the memory allocator for the queue. */
 template <typename T, typename Allocator>
 class BasicQueue {
   protected:
