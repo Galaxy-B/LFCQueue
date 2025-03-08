@@ -42,6 +42,13 @@ using PushHandle = std::function<void(T&)>;
 template <typename T>
 using PopHandle = std::function<void(T&)>;
 
+/* cache-friendly wrapper for user's data structure. */
+template <typename T>
+struct alignas(64) Aligned {
+    T data;
+    static_assert(alignof(Aligned<T>) == 64);
+};
+
 #ifndef NDEBUG
 /* an encapsulation for easier management on file stream. */
 class Dumper {
