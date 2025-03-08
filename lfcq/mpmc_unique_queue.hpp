@@ -8,8 +8,8 @@ namespace lfcq {
 /* multiple producer multiple consumer lock-free circular queue. */
 /* ONLY ONE consumer allowed to manipulate a certain element simultaneously. */
 /* NOTE: available for moving but not for copying. */
-template <typename T>
-class MpmcUniqueQueue : public BasicQueue<T> {
+template <typename T, typename Allocator = std::allocator<T>>
+class MpmcUniqueQueue : public BasicQueue<T, Allocator> {
   private:
     std::atomic<uint32_t> next_w_;
     std::atomic<uint32_t> done_w_;
@@ -17,12 +17,12 @@ class MpmcUniqueQueue : public BasicQueue<T> {
     std::atomic<uint32_t> done_r_;
 
   public:
-    explicit MpmcUniqueQueue(uint32_t size) : BasicQueue<T>(size) {}
+    MpmcUniqueQueue(uint32_t size, const Allocator& alloc = Allocator()) : BasicQueue<T, Allocator>(size, alloc) {}
 
     MpmcUniqueQueue(const MpmcUniqueQueue& other) = delete;
     MpmcUniqueQueue& operator=(const MpmcUniqueQueue& other) = delete;
 
-    MpmcUniqueQueue(MpmcUniqueQueue&& other) noexcept : BasicQueue<T>(std::move(other)) {
+    MpmcUniqueQueue(MpmcUniqueQueue&& other) noexcept : BasicQueue<T, Allocator>(std::move(other)) {
         next_w_ = other.next_w_;
         done_w_ = other.done_w_;
         next_r_ = other.next_r_;
@@ -36,7 +36,7 @@ class MpmcUniqueQueue : public BasicQueue<T> {
             next_r_ = other.next_r_;
             done_r_ = other.done_r_;
 
-            BasicQueue<T>::operator=(std::move(other));
+            BasicQueue<T, Allocator>::operator=(std::move(other));
         }
         return *this;
     }

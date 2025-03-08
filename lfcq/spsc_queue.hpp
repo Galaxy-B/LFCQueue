@@ -7,19 +7,19 @@ namespace lfcq {
 
 /* single producer single consumer lock-free circular queue. */
 /* NOTE: available for moving but not for copying. */
-template <typename T>
-class SpscQueue : public BasicQueue<T> {
+template <typename T, typename Allocator = std::allocator<T>>
+class SpscQueue : public BasicQueue<T, Allocator> {
   private:
     std::atomic<uint32_t> head_;
     std::atomic<uint32_t> tail_;
 
   public:
-    explicit SpscQueue(uint32_t size) : BasicQueue<T>(size) {}
+    SpscQueue(uint32_t size, const Allocator& alloc = Allocator()) : BasicQueue<T, Allocator>(size, alloc) {}
 
     SpscQueue(const SpscQueue& other) = delete;
     SpscQueue& operator=(const SpscQueue& other) = delete;
 
-    SpscQueue(SpscQueue&& other) noexcept : BasicQueue<T>(std::move(other)) {
+    SpscQueue(SpscQueue&& other) noexcept : BasicQueue<T, Allocator>(std::move(other)) {
         head_ = other.head_;
         tail_ = other.tail_;
     }
@@ -29,7 +29,7 @@ class SpscQueue : public BasicQueue<T> {
             head_ = other.head_;
             tail_ = other.tail_;
 
-            BasicQueue<T>::operator=(std::move(other));
+            BasicQueue<T, Allocator>::operator=(std::move(other));
         }
         return *this;
     }

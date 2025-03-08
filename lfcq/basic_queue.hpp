@@ -6,30 +6,31 @@ namespace lfcq {
 
 /* base class for all types of lock-free circular queues. */
 /* NOTE: available for moving but not for copying. */
-template <typename T>
+template <typename T, typename Allocator>
 class BasicQueue {
   protected:
+    Allocator alloc_;
     uint32_t size_;
     uint32_t mask_;
     T* queue_;
 
   public:
-    explicit BasicQueue(uint32_t size) {
+    BasicQueue(uint32_t size, const Allocator& alloc) : alloc_(alloc) {
         size_ = alignUpPowOf2(size);
         mask_ = size_ - 1;
-        queue_ = reinterpret_cast<T*>(new char[sizeof(T) * size_]);
+        queue_ = alloc_.allocate(size_);
     }
 
     virtual ~BasicQueue() {
         if (queue_) {
-            delete[] reinterpret_cast<char*>(queue_);
+            alloc_.deallocate(queue_, size_);
         }
     }
 
     BasicQueue(const BasicQueue& other) = delete;
     BasicQueue& operator=(const BasicQueue& other) = delete;
 
-    BasicQueue(BasicQueue&& other) noexcept {
+    BasicQueue(BasicQueue&& other) noexcept : alloc_(std::move(other.alloc_)) {
         size_ = other.size_;
         mask_ = other.mask_;
 
@@ -42,6 +43,7 @@ class BasicQueue {
             size_ = other.size_;
             mask_ = other.mask_;
 
+            alloc_ = std::move(other.alloc_);
             queue_ = other.queue_;
             other.queue_ = nullptr;
         }
