@@ -28,7 +28,7 @@ class SpscTest : public testing::Test {
         }
     };
 
-    SpscTest() : queue_(1000), cnt_(1000), uid_(random(0U, UINT32_MAX)) {}
+    SpscTest() : queue_(2000), cnt_(2000), uid_(random(0U, UINT32_MAX)) {}
 };
 
 using TestTypes = testing::Types<TrivialObj, NonTrivialObj>;
@@ -85,14 +85,14 @@ TYPED_TEST(SpscTest, EmplaceInterfaceTest) {
 
 TYPED_TEST(SpscTest, LoopWriteTest) {
     // there will be slots written to more than one times, a.k.a loop write
-    this->cnt_ = 3000;
+    this->cnt_ = 4000;
 
     std::thread writer([this]() {
         for (uint32_t i = 0; i < this->cnt_; i++) {
             this->queue_.emplace(this->uid_, i);
             this->writer_.emplace_back(this->uid_, i);
             // in case of emplace failure because there is no time for reader to consume
-            usleep(i % 1000 == 999 ? 300'000 : 0);
+            usleep(i % 1000 == 999 ? 100'000 : 0);
         }
     });
 
