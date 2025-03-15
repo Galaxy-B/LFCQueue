@@ -13,3 +13,7 @@ add_test(NAME LFCQ_basic_test COMMAND basic_test)
 # test case for SPSC queue
 add_executable(spsc_test src/spsc_test.cpp)
 add_test(NAME SPSC_basic_test COMMAND spsc_test)
+
+# test case for MPMC unique queue
+add_executable(mpmc_unique_test src/mpmc_unique_test.cpp)
+add_test(NAME MPMC_unique_basic_test COMMAND mpmc_unique_test)
