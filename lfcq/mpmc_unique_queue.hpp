@@ -61,7 +61,7 @@ class MpmcUniqueQueue : public BasicQueue<T, Allocator> {
         return true;
     }
 
-    /* call this push interface when you wish to manually initialize the object */
+    /* call this push interface when you wish to manually initialize the object. */
     /* return false if the queue is full now, otherwise true. */
     bool push(PushHandle<T>&& handle) noexcept {
         // try to acquire a place for the current push
@@ -80,6 +80,8 @@ class MpmcUniqueQueue : public BasicQueue<T, Allocator> {
 
     /* directly construct an object at the end of the queue. */
     /* return false if the queue is full now, otherwise true. */
+    /* NOTE: the object overwritten by <emplace> interface will NOT be destructed */
+    /* automatically, invoke its destructor explicitly in pop handle if necessary. */
     template <typename... Args>
     bool emplace(Args&&... args) noexcept {
         // try to acquire a place for the current emplacement
