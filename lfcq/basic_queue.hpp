@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <utility>
 #include "utils.hpp"
 
 namespace lfcq {
@@ -36,8 +37,7 @@ class BasicQueue {
         size_ = other.size_;
         mask_ = other.mask_;
 
-        queue_ = other.queue_;
-        other.queue_ = nullptr;
+        queue_ = std::exchange(other.queue_, nullptr);
     }
 
     BasicQueue& operator=(BasicQueue&& other) noexcept {
@@ -46,8 +46,7 @@ class BasicQueue {
             mask_ = other.mask_;
 
             alloc_ = std::move(other.alloc_);
-            queue_ = other.queue_;
-            other.queue_ = nullptr;
+            queue_ = std::exchange(other.queue_, nullptr);
         }
         return *this;
     }
